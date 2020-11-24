@@ -168,6 +168,9 @@ mod tests {
         fn output_at(&self, _at: u32) -> Option<Type> {
             todo!()
         }
+        fn is_trusted(&self) -> bool {
+            false
+        }
     }
 
     #[test]

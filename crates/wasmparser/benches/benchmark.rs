@@ -223,6 +223,7 @@ fn validate_benchmark(c: &mut Criterion) {
             multi_memory: true,
             memory64: true,
             deterministic_only: false,
+            constant_time: true,
         });
         return ret;
     }

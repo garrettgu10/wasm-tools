@@ -37,6 +37,8 @@ pub trait WasmFuncType {
     /// the actually returned type only has to be comparable to a Wasm type.
     fn output_at(&self, at: u32) -> Option<Type>;
 
+    fn is_trusted(&self) -> bool;
+
     /// Returns the list of inputs as an iterator.
     fn inputs(&self) -> WasmFuncTypeInputs<'_, Self>
     where
@@ -76,6 +78,10 @@ where
     fn output_at(&self, at: u32) -> Option<Type> {
         T::output_at(self, at)
     }
+    fn is_trusted(&self) -> bool {
+        T::is_trusted(self)
+    }
+
 }
 
 /// Iterator over the inputs of a Wasm function type.
@@ -271,5 +277,9 @@ impl WasmFuncType for FuncType {
 
     fn output_at(&self, at: u32) -> Option<Type> {
         self.returns.get(at as usize).copied()
+    }
+
+    fn is_trusted(&self) -> bool {
+        self.trusted
     }
 }

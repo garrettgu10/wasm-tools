@@ -184,6 +184,8 @@ impl<'a> BinaryReader<'a> {
             -0x03 => Ok(Type::F32),
             -0x04 => Ok(Type::F64),
             -0x05 => Ok(Type::V128),
+            -0x06 => Ok(Type::S32),
+            -0x07 => Ok(Type::S64),
             -0x10 => Ok(Type::FuncRef),
             -0x11 => Ok(Type::ExternRef),
             -0x18 => Ok(Type::ExnRef),
@@ -214,7 +216,7 @@ impl<'a> BinaryReader<'a> {
         }
     }
 
-    pub(crate) fn read_func_type(&mut self) -> Result<FuncType> {
+    pub(crate) fn read_func_type(&mut self, trusted: bool) -> Result<FuncType> {
         let params_len = self.read_var_u32()? as usize;
         if params_len > MAX_WASM_FUNCTION_PARAMS {
             return Err(BinaryReaderError::new(
@@ -238,6 +240,7 @@ impl<'a> BinaryReader<'a> {
             returns.push(self.read_type()?);
         }
         Ok(FuncType {
+            trusted: trusted,
             params: params.into_boxed_slice(),
             returns: returns.into_boxed_slice(),
         })
@@ -851,6 +854,151 @@ impl<'a> BinaryReader<'a> {
         Ok(imm)
     }
 
+    fn read_0xfb_operator(&mut self) -> Result<Operator<'a>> {
+        let code = self.read_u8()? as u8;
+        Ok(match code {
+            0x28 => Operator::S32Load {
+                memarg: self.read_memarg()?,
+            },
+            0x29 => Operator::S64Load {
+                memarg: self.read_memarg()?,
+            },
+            // 0x2a, 0x2b are floating-point instrs
+            0x2c => Operator::S32Load8S {
+                memarg: self.read_memarg()?,
+            },
+            0x2d => Operator::S32Load8U {
+                memarg: self.read_memarg()?,
+            },
+            0x2e => Operator::S32Load16S {
+                memarg: self.read_memarg()?,
+            },
+            0x2f => Operator::S32Load16U {
+                memarg: self.read_memarg()?,
+            },
+            0x30 => Operator::S64Load8S {
+                memarg: self.read_memarg()?,
+            },
+            0x31 => Operator::S64Load8U {
+                memarg: self.read_memarg()?,
+            },
+            0x32 => Operator::S64Load16S {
+                memarg: self.read_memarg()?,
+            },
+            0x33 => Operator::S64Load16U {
+                memarg: self.read_memarg()?,
+            },
+            0x34 => Operator::S64Load32S {
+                memarg: self.read_memarg()?,
+            },
+            0x35 => Operator::S64Load32U {
+                memarg: self.read_memarg()?,
+            },
+            0x36 => Operator::S32Store {
+                memarg: self.read_memarg()?,
+            },
+            0x37 => Operator::S64Store {
+                memarg: self.read_memarg()?,
+            },
+            // skipping 0x38, 0x39 since they are floating-point
+            0x3a => Operator::S32Store8 {
+                memarg: self.read_memarg()?,
+            },
+            0x3b => Operator::S32Store16 {
+                memarg: self.read_memarg()?,
+            },
+            0x3c => Operator::S64Store8 {
+                memarg: self.read_memarg()?,
+            },
+            0x3d => Operator::S64Store16 {
+                memarg: self.read_memarg()?,
+            },
+            0x3e => Operator::S64Store32 {
+                memarg: self.read_memarg()?,
+            },
+            // skipping 0x3f, 0x40 since MemorySize and MemoryGrow are not defined for secret values
+            0x41 => Operator::S32Const {
+                value: self.read_var_i32()?,
+            },
+            0x42 => Operator::S64Const {
+                value: self.read_var_i64()?,
+            },
+            // skipping 0x43, 0x44 since they are floating-point
+            0x45 => Operator::S32Eqz,
+            0x46 => Operator::S32Eq,
+            0x47 => Operator::S32Ne,
+            0x48 => Operator::S32LtS,
+            0x49 => Operator::S32LtU,
+            0x4a => Operator::S32GtS,
+            0x4b => Operator::S32GtU,
+            0x4c => Operator::S32LeS,
+            0x4d => Operator::S32LeU,
+            0x4e => Operator::S32GeS,
+            0x4f => Operator::S32GeU,
+            0x50 => Operator::S64Eqz,
+            0x51 => Operator::S64Eq,
+            0x52 => Operator::S64Ne,
+            0x53 => Operator::S64LtS,
+            0x54 => Operator::S64LtU,
+            0x55 => Operator::S64GtS,
+            0x56 => Operator::S64GtU,
+            0x57 => Operator::S64LeS,
+            0x58 => Operator::S64LeU,
+            0x59 => Operator::S64GeS,
+            0x5a => Operator::S64GeU,
+            // skipping [0x5b, 0x66] since they are floating-point
+            0x67 => Operator::S32Clz,
+            0x68 => Operator::S32Ctz,
+            0x69 => Operator::S32Popcnt,
+            0x6a => Operator::S32Add,
+            0x6b => Operator::S32Sub,
+            0x6c => Operator::S32Mul,
+            0x6d => Operator::S32DivS,
+            0x6e => Operator::S32DivU,
+            0x6f => Operator::S32RemS,
+            0x70 => Operator::S32RemU,
+            0x71 => Operator::S32And,
+            0x72 => Operator::S32Or,
+            0x73 => Operator::S32Xor,
+            0x74 => Operator::S32Shl,
+            0x75 => Operator::S32ShrS,
+            0x76 => Operator::S32ShrU,
+            0x77 => Operator::S32Rotl,
+            0x78 => Operator::S32Rotr,
+            0x79 => Operator::S64Clz,
+            0x7a => Operator::S64Ctz,
+            0x7b => Operator::S64Popcnt,
+            0x7c => Operator::S64Add,
+            0x7d => Operator::S64Sub,
+            0x7e => Operator::S64Mul,
+            0x7f => Operator::S64DivS,
+            0x80 => Operator::S64DivU,
+            0x81 => Operator::S64RemS,
+            0x82 => Operator::S64RemU,
+            0x83 => Operator::S64And,
+            0x84 => Operator::S64Or,
+            0x85 => Operator::S64Xor,
+            0x86 => Operator::S64Shl,
+            0x87 => Operator::S64ShrS,
+            0x88 => Operator::S64ShrU,
+            0x89 => Operator::S64Rotl,
+            0x8a => Operator::S64Rotr,
+            // skipping [0x8b, 0xa6] since they are floating-point
+            0xa7 => Operator::S32WrapS64,
+            // skipping [0xa8, 0xab] since they are floating-point
+            0xc0 => Operator::S32Classify,
+            0xc1 => Operator::S64Classify,
+            0xc2 => Operator::I32Declassify,
+            0xc3 => Operator::I64Declassify,
+            _ => {
+                return Err(BinaryReaderError::new(
+                    format!("Unknown 0xfb subopcode: 0x{:x}", code),
+                    self.original_position() - 1,
+                ));
+            }
+        })
+    }
+
     fn read_0xfe_operator(&mut self) -> Result<Operator<'a>> {
         let code = self.read_var_u32()?;
         Ok(match code {
@@ -1396,7 +1544,8 @@ impl<'a> BinaryReader<'a> {
             0xd2 => Operator::RefFunc {
                 function_index: self.read_var_u32()?,
             },
-
+            
+            0xfb => self.read_0xfb_operator()?,
             0xfc => self.read_0xfc_operator()?,
             0xfd => self.read_0xfd_operator()?,
             0xfe => self.read_0xfe_operator()?,

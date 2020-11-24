@@ -363,6 +363,11 @@ impl Printer {
     /// later.
     fn print_functype(&mut self, ty: &FuncType, names_for: Option<u32>) -> Result<u32> {
         let mut params = NamedLocalPrinter::new("param");
+        self.result.push_str(if ty.trusted {
+            " trusted"
+        } else {
+            " untrusted"
+        });
         // Note that named parameters must be alone in a `param` block, so
         // we need to be careful to terminate previous param blocks and open
         // a new one if that's the case with a named parameter.
@@ -393,6 +398,8 @@ impl Printer {
             Type::I64 => self.result.push_str("i64"),
             Type::F32 => self.result.push_str("f32"),
             Type::F64 => self.result.push_str("f64"),
+            Type::S32 => self.result.push_str("s32"),
+            Type::S64 => self.result.push_str("s64"),
             Type::V128 => self.result.push_str("v128"),
             Type::FuncRef => self.result.push_str("funcref"),
             Type::ExternRef => self.result.push_str("externref"),
@@ -838,6 +845,19 @@ impl Printer {
             I64Load32S { memarg } => self.mem_instr("i64.load32_s", memarg, 4)?,
             I64Load32U { memarg } => self.mem_instr("i64.load32_u", memarg, 4)?,
 
+            S32Load { memarg } => self.mem_instr("s32.load", memarg, 4)?,
+            S64Load { memarg } => self.mem_instr("s64.load", memarg, 8)?,
+            S32Load8S { memarg } => self.mem_instr("s32.load8_s", memarg, 1)?,
+            S32Load8U { memarg } => self.mem_instr("s32.load8_u", memarg, 1)?,
+            S32Load16S { memarg } => self.mem_instr("s32.load16_s", memarg, 2)?,
+            S32Load16U { memarg } => self.mem_instr("s32.load16_u", memarg, 2)?,
+            S64Load8S { memarg } => self.mem_instr("s64.load8_s", memarg, 1)?,
+            S64Load8U { memarg } => self.mem_instr("s64.load8_u", memarg, 1)?,
+            S64Load16S { memarg } => self.mem_instr("s64.load16_s", memarg, 2)?,
+            S64Load16U { memarg } => self.mem_instr("s64.load16_u", memarg, 2)?,
+            S64Load32S { memarg } => self.mem_instr("s64.load32_s", memarg, 4)?,
+            S64Load32U { memarg } => self.mem_instr("s64.load32_u", memarg, 4)?,
+
             I32Store { memarg } => self.mem_instr("i32.store", memarg, 4)?,
             I64Store { memarg } => self.mem_instr("i64.store", memarg, 8)?,
             F32Store { memarg } => self.mem_instr("f32.store", memarg, 4)?,
@@ -847,6 +867,14 @@ impl Printer {
             I64Store8 { memarg } => self.mem_instr("i64.store8", memarg, 1)?,
             I64Store16 { memarg } => self.mem_instr("i64.store16", memarg, 2)?,
             I64Store32 { memarg } => self.mem_instr("i64.store32", memarg, 4)?,
+
+            S32Store { memarg } => self.mem_instr("s32.store", memarg, 4)?,
+            S64Store { memarg } => self.mem_instr("s64.store", memarg, 8)?,
+            S32Store8 { memarg } => self.mem_instr("s32.store8", memarg, 1)?,
+            S32Store16 { memarg } => self.mem_instr("s32.store16", memarg, 2)?,
+            S64Store8 { memarg } => self.mem_instr("s64.store8", memarg, 1)?,
+            S64Store16 { memarg } => self.mem_instr("s64.store16", memarg, 2)?,
+            S64Store32 { memarg } => self.mem_instr("s64.store32", memarg, 4)?,
 
             MemorySize { mem: 0, .. } => self.result.push_str("memory.size"),
             MemorySize { mem, .. } => write!(self.result, "memory.size {}", mem)?,
@@ -863,6 +891,9 @@ impl Printer {
                 self.result.push_str("f64.const ");
                 self.print_f64(value.bits())?;
             }
+
+            S32Const { value } => write!(self.result, "s32.const {}", value)?,
+            S64Const { value } => write!(self.result, "s64.const {}", value)?,
 
             RefNull { ty } => {
                 self.result.push_str("ref.null ");
@@ -898,6 +929,30 @@ impl Printer {
             I64GeS => self.result.push_str("i64.ge_s"),
             I64GeU => self.result.push_str("i64.ge_u"),
 
+            S32Eqz => self.result.push_str("s32.eqz"),
+            S32Eq => self.result.push_str("s32.eq"),
+            S32Ne => self.result.push_str("s32.ne"),
+            S32LtS => self.result.push_str("s32.lt_s"),
+            S32LtU => self.result.push_str("s32.lt_u"),
+            S32GtS => self.result.push_str("s32.gt_s"),
+            S32GtU => self.result.push_str("s32.gt_u"),
+            S32LeS => self.result.push_str("s32.le_s"),
+            S32LeU => self.result.push_str("s32.le_u"),
+            S32GeS => self.result.push_str("s32.ge_s"),
+            S32GeU => self.result.push_str("s32.ge_u"),
+
+            S64Eqz => self.result.push_str("s64.eqz"),
+            S64Eq => self.result.push_str("s64.eq"),
+            S64Ne => self.result.push_str("s64.ne"),
+            S64LtS => self.result.push_str("s64.lt_s"),
+            S64LtU => self.result.push_str("s64.lt_u"),
+            S64GtS => self.result.push_str("s64.gt_s"),
+            S64GtU => self.result.push_str("s64.gt_u"),
+            S64LeS => self.result.push_str("s64.le_s"),
+            S64LeU => self.result.push_str("s64.le_u"),
+            S64GeS => self.result.push_str("s64.ge_s"),
+            S64GeU => self.result.push_str("s64.ge_u"),
+
             F32Eq => self.result.push_str("f32.eq"),
             F32Ne => self.result.push_str("f32.ne"),
             F32Lt => self.result.push_str("f32.lt"),
@@ -931,6 +986,25 @@ impl Printer {
             I32Rotl => self.result.push_str("i32.rotl"),
             I32Rotr => self.result.push_str("i32.rotr"),
 
+            S32Clz => self.result.push_str("s32.clz"),
+            S32Ctz => self.result.push_str("s32.ctz"),
+            S32Popcnt => self.result.push_str("s32.popcnt"),
+            S32Add => self.result.push_str("s32.add"),
+            S32Sub => self.result.push_str("s32.sub"),
+            S32Mul => self.result.push_str("s32.mul"),
+            S32DivS => self.result.push_str("s32.div_s"),
+            S32DivU => self.result.push_str("s32.div_u"),
+            S32RemS => self.result.push_str("s32.rem_s"),
+            S32RemU => self.result.push_str("s32.rem_u"),
+            S32And => self.result.push_str("s32.and"),
+            S32Or => self.result.push_str("s32.or"),
+            S32Xor => self.result.push_str("s32.xor"),
+            S32Shl => self.result.push_str("s32.shl"),
+            S32ShrS => self.result.push_str("s32.shr_s"),
+            S32ShrU => self.result.push_str("s32.shr_u"),
+            S32Rotl => self.result.push_str("s32.rotl"),
+            S32Rotr => self.result.push_str("s32.rotr"),
+
             I64Clz => self.result.push_str("i64.clz"),
             I64Ctz => self.result.push_str("i64.ctz"),
             I64Popcnt => self.result.push_str("i64.popcnt"),
@@ -949,6 +1023,25 @@ impl Printer {
             I64ShrU => self.result.push_str("i64.shr_u"),
             I64Rotl => self.result.push_str("i64.rotl"),
             I64Rotr => self.result.push_str("i64.rotr"),
+
+            S64Clz => self.result.push_str("s64.clz"),
+            S64Ctz => self.result.push_str("s64.ctz"),
+            S64Popcnt => self.result.push_str("s64.popcnt"),
+            S64Add => self.result.push_str("s64.add"),
+            S64Sub => self.result.push_str("s64.sub"),
+            S64Mul => self.result.push_str("s64.mul"),
+            S64DivS => self.result.push_str("s64.div_s"),
+            S64DivU => self.result.push_str("s64.div_u"),
+            S64RemS => self.result.push_str("s64.rem_s"),
+            S64RemU => self.result.push_str("s64.rem_u"),
+            S64And => self.result.push_str("s64.and"),
+            S64Or => self.result.push_str("s64.or"),
+            S64Xor => self.result.push_str("s64.xor"),
+            S64Shl => self.result.push_str("s64.shl"),
+            S64ShrS => self.result.push_str("s64.shr_s"),
+            S64ShrU => self.result.push_str("s64.shr_u"),
+            S64Rotl => self.result.push_str("s64.rotl"),
+            S64Rotr => self.result.push_str("s64.rotr"),
 
             F32Abs => self.result.push_str("f32.abs"),
             F32Neg => self.result.push_str("f32.neg"),
@@ -991,6 +1084,12 @@ impl Printer {
             I64TruncF32U => self.result.push_str("i64.trunc_f32_u"),
             I64TruncF64S => self.result.push_str("i64.trunc_f64_s"),
             I64TruncF64U => self.result.push_str("i64.trunc_f64_u"),
+
+            S32WrapS64 => self.result.push_str("s32.wrap_s64"),
+            S32Classify => self.result.push_str("s32.classify_i32"),
+            S64Classify => self.result.push_str("s64.classify_i64"),
+            I32Declassify => self.result.push_str("i32.declassify_s32"),
+            I64Declassify => self.result.push_str("i64.declassify_s64"),
 
             F32ConvertI32S => self.result.push_str("f32.convert_i32_s"),
             F32ConvertI32U => self.result.push_str("f32.convert_i32_u"),

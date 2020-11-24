@@ -166,6 +166,8 @@ pub struct WasmFeatures {
     pub exceptions: bool,
     /// The WebAssembly memory64 proposal
     pub memory64: bool,
+    /// The CT-Wasm extension
+    pub constant_time: bool,
 }
 
 impl Default for WasmFeatures {
@@ -182,6 +184,7 @@ impl Default for WasmFeatures {
             exceptions: false,
             memory64: false,
             deterministic_only: cfg!(feature = "deterministic"),
+            constant_time: false,
 
             // on-by-default features
             multi_value: true,
@@ -1736,6 +1739,13 @@ impl WasmFeatures {
                     Ok(())
                 } else {
                     Err("SIMD support is not enabled")
+                }
+            }
+            Type::S32 | Type::S64 => {
+                if self.constant_time {
+                    Ok(())
+                } else {
+                    Err("CT-Wasm is not enabled")
                 }
             }
             _ => Err("invalid value type"),
