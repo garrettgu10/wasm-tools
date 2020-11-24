@@ -619,6 +619,8 @@ pub enum Operator<'a> {
     // sign-extensions are not included here since CT-Wasm predates the proposal so the opcodes are used for classify/declassify instead
 
     S32WrapS64,
+    S64ExtendS32S,
+    S64ExtendS32U,
     S32Classify,
     S64Classify,
     I32Declassify,

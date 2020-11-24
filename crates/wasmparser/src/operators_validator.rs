@@ -1256,6 +1256,16 @@ impl OperatorValidator {
                 self.pop_operand(Some(Type::S64))?;
                 self.push_operand(Type::S32)?;
             }
+            Operator::S64ExtendS32S => {
+                self.check_constant_time_enabled()?;
+                self.pop_operand(Some(Type::S32))?;
+                self.push_operand(Type::S64)?;
+            }
+            Operator::S64ExtendS32U => {
+                self.check_constant_time_enabled()?;
+                self.pop_operand(Some(Type::S32))?;
+                self.push_operand(Type::S64)?;
+            }
             Operator::S32Classify => {
                 self.check_constant_time_enabled()?;
                 self.pop_operand(Some(Type::I32))?;

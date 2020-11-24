@@ -363,11 +363,9 @@ impl Printer {
     /// later.
     fn print_functype(&mut self, ty: &FuncType, names_for: Option<u32>) -> Result<u32> {
         let mut params = NamedLocalPrinter::new("param");
-        self.result.push_str(if ty.trusted {
-            " trusted"
-        } else {
-            " untrusted"
-        });
+        if !ty.trusted {
+            self.result.push_str(" untrusted");
+        }
         // Note that named parameters must be alone in a `param` block, so
         // we need to be careful to terminate previous param blocks and open
         // a new one if that's the case with a named parameter.
@@ -1086,6 +1084,8 @@ impl Printer {
             I64TruncF64U => self.result.push_str("i64.trunc_f64_u"),
 
             S32WrapS64 => self.result.push_str("s32.wrap_s64"),
+            S64ExtendS32S => self.result.push_str("s64.extend_s32_s"),
+            S64ExtendS32U => self.result.push_str("s64.extend_s32_u"),
             S32Classify => self.result.push_str("s32.classify_i32"),
             S64Classify => self.result.push_str("s64.classify_i64"),
             I32Declassify => self.result.push_str("i32.declassify_s32"),

@@ -985,6 +985,8 @@ impl<'a> BinaryReader<'a> {
             0x8a => Operator::S64Rotr,
             // skipping [0x8b, 0xa6] since they are floating-point
             0xa7 => Operator::S32WrapS64,
+            0xac => Operator::S64ExtendS32S,
+            0xad => Operator::S64ExtendS32U,
             // skipping [0xa8, 0xab] since they are floating-point
             0xc0 => Operator::S32Classify,
             0xc1 => Operator::S64Classify,
