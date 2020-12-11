@@ -502,6 +502,11 @@ impl OperatorValidator {
                 );
             }
         };
+
+        if ty.is_trusted() {
+            self.check_is_trusted()?;
+        }
+
         for ty in ty.inputs().rev() {
             self.pop_operand(Some(ty))?;
         }
@@ -524,6 +529,9 @@ impl OperatorValidator {
             ));
         }
         let ty = func_type_at(&resources, index)?;
+        if ty.is_trusted() {
+            self.check_is_trusted()?;
+        }
         self.pop_operand(Some(Type::I32))?;
         for ty in ty.inputs().rev() {
             self.pop_operand(Some(ty))?;
