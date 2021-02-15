@@ -184,7 +184,7 @@ impl Default for WasmFeatures {
             exceptions: false,
             memory64: false,
             deterministic_only: cfg!(feature = "deterministic"),
-            constant_time: false,
+            constant_time: true,
 
             // on-by-default features
             multi_value: true,
@@ -673,7 +673,7 @@ impl Validator {
 
     fn memory_type(&self, ty: &MemoryType) -> Result<()> {
         match ty {
-            MemoryType::M32 { limits, shared } => {
+            MemoryType::M32 { limits, shared, .. } => {
                 self.limits(limits)?;
                 let initial = limits.initial;
                 if initial as usize > MAX_WASM_MEMORY_PAGES {
@@ -693,7 +693,7 @@ impl Validator {
                     }
                 }
             }
-            MemoryType::M64 { limits, shared } => {
+            MemoryType::M64 { limits, shared, .. } => {
                 if !self.features.memory64 {
                     return self.create_error("memory64 must be enabled for 64-bit memories");
                 }
@@ -1066,11 +1066,11 @@ impl Validator {
                     (
                         MemoryType::M32 {
                             limits: a,
-                            shared: ash,
+                            shared: ash, ..
                         },
                         MemoryType::M32 {
                             limits: b,
-                            shared: bsh,
+                            shared: bsh, ..
                         },
                     ) => {
                         if limits_match!(a, b) && ash == bsh {
@@ -1080,11 +1080,11 @@ impl Validator {
                     (
                         MemoryType::M64 {
                             limits: a,
-                            shared: ash,
+                            shared: ash, ..
                         },
                         MemoryType::M64 {
                             limits: b,
-                            shared: bsh,
+                            shared: bsh, ..
                         },
                     ) => {
                         if limits_match!(a, b) && ash == bsh {

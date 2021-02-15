@@ -502,13 +502,19 @@ impl Printer {
             write!(self.result, "(;{};) ", self.state.memory)?;
         }
         match ty {
-            MemoryType::M32 { limits, shared } => {
+            MemoryType::M32 { limits, shared, secret } => {
+                if *secret {
+                    self.result.push_str("secret ");
+                }
                 self.print_limits(limits)?;
                 if *shared {
                     self.result.push_str(" shared");
                 }
             }
-            MemoryType::M64 { limits, shared } => {
+            MemoryType::M64 { limits, shared, secret } => {
+                if *secret {
+                    self.result.push_str(" secret");
+                }
                 write!(self.result, "i64 {}", limits.initial)?;
                 if let Some(max) = limits.maximum {
                     write!(self.result, " {}", max)?;
@@ -1086,10 +1092,10 @@ impl Printer {
             S32WrapS64 => self.result.push_str("s32.wrap_s64"),
             S64ExtendS32S => self.result.push_str("s64.extend_s32_s"),
             S64ExtendS32U => self.result.push_str("s64.extend_s32_u"),
-            S32Classify => self.result.push_str("s32.classify_i32"),
-            S64Classify => self.result.push_str("s64.classify_i64"),
-            I32Declassify => self.result.push_str("i32.declassify_s32"),
-            I64Declassify => self.result.push_str("i64.declassify_s64"),
+            S32Classify => self.result.push_str("s32.classify"),
+            S64Classify => self.result.push_str("s64.classify"),
+            I32Declassify => self.result.push_str("i32.declassify"),
+            I64Declassify => self.result.push_str("i64.declassify"),
 
             F32ConvertI32S => self.result.push_str("f32.convert_i32_s"),
             F32ConvertI32U => self.result.push_str("f32.convert_i32_u"),
